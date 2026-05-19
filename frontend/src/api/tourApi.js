@@ -13,41 +13,41 @@ import axiosInstance from "./axiosInstance";
  * @returns {Promise} Axios response with array of tour objects
  */
 export const getAllTours = (params = {}) =>
-  axiosInstance.get("/tours", { params });
+  axiosInstance.get("/packages", { params });
 
 /**
- * getTourById — Fetches a single tour's full details including guides and reviews.
+ * getTourById — Fetches a single package's full details.
  *
- * @param {string} tourId - MongoDB ObjectId of the tour
- * @returns {Promise} Axios response with a single tour object
+ * @param {string} tourId - MongoDB ObjectId of the package
+ * @returns {Promise} Axios response with a single package object
  */
 export const getTourById = (tourId) =>
-  axiosInstance.get(`/tours/${tourId}`);
+  axiosInstance.get(`/packages/${tourId}`);
 
 /**
- * createTour — Creates a new tour package (admin only).
+ * createTour — Creates a new travel package (staff/admin only).
  *
- * @param {Object} tourData - The tour object matching the Tour schema
- * @returns {Promise} Axios response with the newly created tour
+ * @param {Object} tourData - The package object matching the TravelPackage schema
+ * @returns {Promise} Axios response with the newly created package
  */
 export const createTour = (tourData) =>
-  axiosInstance.post("/tours", tourData);
+  axiosInstance.post("/packages", tourData);
 
 /**
- * updateTour — Updates specific fields of a tour package (admin only).
+ * updateTour — Updates specific fields of a travel package (staff/admin only).
  *
- * @param {string} tourId   - MongoDB ObjectId of the tour to update
- * @param {Object} tourData - Partial tour object with updated fields
- * @returns {Promise} Axios response with the updated tour
+ * @param {string} tourId   - MongoDB ObjectId of the package to update
+ * @param {Object} tourData - Partial package object with updated fields
+ * @returns {Promise} Axios response with the updated package
  */
 export const updateTour = (tourId, tourData) =>
-  axiosInstance.patch(`/tours/${tourId}`, tourData);
+  axiosInstance.patch(`/packages/${tourId}`, tourData);
 
 /**
- * deleteTour — Soft-deletes a tour by setting isActive to false (admin only).
+ * deleteTour — Soft-deletes a package by setting isActive to false (admin only).
  *
- * @param {string} tourId - MongoDB ObjectId of the tour to deactivate
+ * @param {string} tourId - MongoDB ObjectId of the package to deactivate
  * @returns {Promise} Axios response confirming deactivation
  */
 export const deleteTour = (tourId) =>
-  axiosInstance.delete(`/tours/${tourId}`);
+  axiosInstance.delete(`/packages/${tourId}`);

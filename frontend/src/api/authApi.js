@@ -32,3 +32,22 @@ export const loginUser = (credentials) =>
  * @returns {Promise} Axios response containing the user document
  */
 export const getMyProfile = () => axiosInstance.get("/auth/me");
+
+/**
+ * updateMyProfile — Partially updates the authenticated user's profile.
+ * Only whitelisted fields (fullName, phoneNumber, country, profilePicture) are accepted.
+ *
+ * @param {Object} profileData - Partial user object with fields to update
+ * @returns {Promise} Axios response with the updated user document
+ */
+export const updateMyProfile = (profileData) =>
+  axiosInstance.patch("/auth/profile", profileData);
+
+/**
+ * changePassword — Verifies the current password and sets a new one.
+ *
+ * @param {Object} passwords - { currentPassword, newPassword }
+ * @returns {Promise} Axios response with a fresh JWT token
+ */
+export const changePassword = (passwords) =>
+  axiosInstance.patch("/auth/change-password", passwords);

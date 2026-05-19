@@ -1,72 +1,124 @@
 /**
  * authController.js — Authentication Controller
- * -----------------------------------------------
+ * ================================================
  * Handles user registration, login, and profile retrieval.
- * All responses follow a consistent JSON structure for the frontend.
+ *
+ * Flow for Registration:
+ *   1. Check if the email already exists in the database.
+ *   2. Hash the plain-text password using bcryptjs (12 salt rounds).
+ *   3. Insert the new user row into PostgreSQL.
+ *   4. Sign and return a JWT so the user is immediately logged in.
+ *
+ * Flow for Login:
+ *   1. Find the user by email (case-insensitive).
+ *   2. Compare the submitted password against the stored bcrypt hash.
+ *   3. Return a JWT on success; a generic error on failure.
+ *
+ * Security notes:
+ *   - Login errors are intentionally vague ("invalid email or password")
+ *     to prevent user enumeration attacks.
+ *   - password_hash is never included in any API response.
+ *   - Only 'customer' registration is open publicly. Staff/Admin accounts
+ *     can only be created by an admin (a future endpoint).
  */
 
-const User = require("../models/User");
+const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const { findUserByEmail, findUserById, createUser } = require("../queries/userQueries");
+
+// ---- Constants ----
+const BCRYPT_SALT_ROUNDS = 12; // Higher = more secure, but slower hashing
 
 /**
- * generateJWT — Creates and returns a signed JWT for the given user ID.
- * The token expiry is read from environment variables (default: 7 days).
+ * generateJWT — Signs a JWT containing just the user's ID.
+ * Keeping the payload small improves performance on every authenticated request.
  *
- * @param {string} userId - The MongoDB _id of the authenticated user
- * @returns {string} - A signed JWT string
+ * @param {number} userId — The user's integer primary key from PostgreSQL
+ * @returns {string} A signed JWT string
  */
 const generateJWT = (userId) => {
   return jwt.sign(
-    { id: userId }, // Payload: store only the user ID to keep tokens small
+    { id: userId },
     process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRES_IN || "7d" }
   );
 };
 
+/**
+ * formatUserResponse — Builds a safe user object for API responses.
+ * Ensures password_hash and internal fields are never accidentally sent.
+ *
+ * @param {Object} user — Raw row from the `users` table
+ * @returns {Object} Clean user object safe for client consumption
+ */
+const formatUserResponse = (user) => ({
+  id: user.id,
+  fullName: user.full_name,
+  email: user.email,
+  role: user.role,
+  phoneNumber: user.phone_number,
+  profilePictureUrl: user.profile_picture_url,
+  createdAt: user.created_at,
+});
+
 // ============================================================
 // @route   POST /api/auth/register
-// @desc    Register a new user account
+// @desc    Register a new customer account
 // @access  Public
 // ============================================================
-const registerUser = async (req, res) => {
+const registerUser = async (req, res, next) => {
   try {
     const { fullName, email, password, phoneNumber } = req.body;
 
-    // Check if a user with this email already exists in the database
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
+    // --- Validate required fields ---
+    if (!fullName || !email || !password) {
       return res.status(400).json({
+        success: false,
+        message: "Full name, email, and password are required.",
+      });
+    }
+
+    if (password.length < 8) {
+      return res.status(400).json({
+        success: false,
+        message: "Password must be at least 8 characters long.",
+      });
+    }
+
+    // --- Check for duplicate email ---
+    const existingUserResult = await findUserByEmail(email);
+    if (existingUserResult.rows.length > 0) {
+      return res.status(409).json({
         success: false,
         message: "An account with this email address already exists.",
       });
     }
 
-    // Create a new user document (password is hashed by the pre-save hook in User.js)
-    const newUser = await User.create({
+    // --- Hash the password before storing ---
+    const passwordHash = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
+
+    // --- Create the user in PostgreSQL (role defaults to 'customer') ---
+    const newUserResult = await createUser(
       fullName,
       email,
-      password,
-      phoneNumber,
-    });
+      passwordHash,
+      "customer", // Public registration always creates a customer account
+      phoneNumber
+    );
+    const newUser = newUserResult.rows[0];
 
-    // Generate a JWT for the newly registered user
-    const token = generateJWT(newUser._id);
+    // --- Issue a JWT so the user is immediately authenticated ---
+    const token = generateJWT(newUser.id);
 
-    // Respond with the created user's public data and the token
     res.status(201).json({
       success: true,
-      message: "Account created successfully. Welcome to GlobeTrek!",
+      message: "Account created successfully. Welcome to GlobeTrek Adventures!",
       token,
-      user: {
-        id: newUser._id,
-        fullName: newUser.fullName,
-        email: newUser.email,
-        role: newUser.role,
-        profilePicture: newUser.profilePicture,
-      },
+      user: formatUserResponse(newUser),
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    // Pass unexpected errors to the global error handler in errorMiddleware.js
+    next(error);
   }
 };
 
@@ -75,71 +127,84 @@ const registerUser = async (req, res) => {
 // @desc    Authenticate a user and return a JWT
 // @access  Public
 // ============================================================
-const loginUser = async (req, res) => {
+const loginUser = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
-    // Basic validation: ensure both fields are provided
+    // --- Validate required fields ---
     if (!email || !password) {
       return res.status(400).json({
         success: false,
-        message: "Please provide both email and password.",
+        message: "Email and password are required.",
       });
     }
 
-    // Find the user by email. "+password" explicitly includes the password
-    // field since it has `select: false` in the schema.
-    const user = await User.findOne({ email }).select("+password");
+    // --- Look up the user by email ---
+    // `findUserByEmail` selects password_hash explicitly for comparison
+    const userResult = await findUserByEmail(email);
+    const user = userResult.rows[0];
 
-    // If no user found OR password doesn't match, return a generic error
-    // (Don't reveal which specific part was wrong — security best practice)
-    if (!user || !(await user.comparePassword(password))) {
+    // --- Verify password against the stored hash ---
+    // Run bcrypt.compare even if user is not found (prevents timing attacks)
+    const isPasswordCorrect = user
+      ? await bcrypt.compare(password, user.password_hash)
+      : false;
+
+    // --- Return a generic error if either check fails ---
+    if (!user || !isPasswordCorrect) {
       return res.status(401).json({
         success: false,
         message: "Invalid email or password. Please try again.",
       });
     }
 
-    // Credentials are valid — generate a fresh JWT
-    const token = generateJWT(user._id);
+    // --- Check if the account has been deactivated ---
+    if (!user.is_active) {
+      return res.status(403).json({
+        success: false,
+        message: "This account has been deactivated. Please contact support.",
+      });
+    }
+
+    // --- Issue a JWT ---
+    const token = generateJWT(user.id);
 
     res.status(200).json({
       success: true,
       message: "Login successful. Welcome back!",
       token,
-      user: {
-        id: user._id,
-        fullName: user.fullName,
-        email: user.email,
-        role: user.role,
-        profilePicture: user.profilePicture,
-      },
+      user: formatUserResponse(user),
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    next(error);
   }
 };
 
 // ============================================================
 // @route   GET /api/auth/me
-// @desc    Get the currently logged-in user's profile
-// @access  Private (requires valid JWT via `protect` middleware)
+// @desc    Return the currently authenticated user's profile
+// @access  Private — any logged-in user
 // ============================================================
-const getMyProfile = async (req, res) => {
+const getMyProfile = async (req, res, next) => {
   try {
-    // `req.user` is populated by the `protect` middleware after JWT verification
-    const user = await User.findById(req.user._id);
+    // req.user is populated by the `protect` middleware after JWT verification
+    // We re-fetch from the DB to ensure we have the latest data
+    const userResult = await findUserById(req.user.id);
+    const user = userResult.rows[0];
 
     if (!user) {
-      return res.status(404).json({ success: false, message: "User not found." });
+      return res.status(404).json({
+        success: false,
+        message: "User account not found.",
+      });
     }
 
     res.status(200).json({
       success: true,
-      user,
+      user: formatUserResponse(user),
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    next(error);
   }
 };
 

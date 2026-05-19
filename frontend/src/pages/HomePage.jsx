@@ -1,203 +1,294 @@
 /**
  * HomePage.jsx — GlobeTrek Adventures Landing Page
- * --------------------------------------------------
- * The main marketing page. Features:
- *  - Full-screen hero section with a bold headline and CTA
- *  - Search/filter bar for quick tour discovery
- *  - Feature highlights (Why Choose Us)
- *  - Call-to-action banner
+ * ==================================================
+ * Full marketing landing page for guest visitors.
+ * WHITE / LIGHT theme — crisp, professional, premium.
+ *
+ * Sections:
+ *   1. Hero          — Bold headline, subtext, CTA buttons, key stats
+ *   2. Destinations  — Quick-filter pills for popular Sri Lanka locations
+ *   3. Why GlobeTrek — 4-column feature card grid
+ *   4. CTA Banner    — Full-width call-to-action before the footer
  */
 
 import { Link } from "react-router-dom";
-import { ArrowRight, Star, Shield, Clock, Users, MapPin } from "lucide-react";
+import {
+  ArrowRight, Star, Shield, Clock, Users,
+  MapPin, CheckCircle, ChevronRight,
+} from "lucide-react";
 
-// ---- Feature data for the "Why GlobeTrek?" section ----
+/* ── Feature cards data ──────────────────────────────────────── */
 const FEATURES = [
   {
     id: "expert-guides",
-    Icon: Users,
+    icon: Users,
+    color: "blue",
     title: "Expert Local Guides",
-    description: "Our certified guides bring Sri Lanka's stories to life with insider knowledge and genuine passion.",
+    description:
+      "Our certified guides bring Sri Lanka's culture, history, and hidden gems to life with insider knowledge.",
   },
   {
     id: "safety-first",
-    Icon: Shield,
-    title: "Safety First",
-    description: "Every tour is fully insured and rigorously safety-checked so you can explore with total confidence.",
+    icon: Shield,
+    color: "green",
+    title: "Fully Insured & Safe",
+    description:
+      "Every tour is comprehensively insured and rigorously safety-checked so you can relax and explore.",
   },
   {
     id: "flexible-booking",
-    Icon: Clock,
+    icon: Clock,
+    color: "amber",
     title: "Flexible Booking",
-    description: "Free cancellation up to 48 hours before your tour. Your plans change — we understand.",
+    description:
+      "Free cancellation up to 48 hours before your tour starts. Your schedule, your adventure.",
   },
   {
-    id: "curated-experiences",
-    Icon: Star,
-    title: "Curated Experiences",
-    description: "Handpicked destinations and itineraries designed to deliver authentic, unforgettable memories.",
+    id: "top-rated",
+    icon: Star,
+    color: "purple",
+    title: "Top Rated Experiences",
+    description:
+      "Consistently rated 4.9 ★ by over 500 travellers — quality and satisfaction are our guarantee.",
   },
 ];
 
-// ---- Popular destination tags ----
-const DESTINATIONS = ["Sigiriya", "Kandy", "Ella", "Yala", "Galle", "Mirissa", "Nuwara Eliya", "Negombo"];
+/* ── Icon colour map for feature cards ───────────────────────── */
+const ICON_COLORS = {
+  blue:   "bg-blue-50   text-blue-600   border-blue-100",
+  green:  "bg-green-50  text-green-600  border-green-100",
+  amber:  "bg-amber-50  text-amber-600  border-amber-100",
+  purple: "bg-purple-50 text-purple-600 border-purple-100",
+};
 
-const HomePage = () => {
-  return (
-    <div className="animate-fade-in">
+/* ── Popular destination pills ───────────────────────────────── */
+const DESTINATIONS = [
+  "Sigiriya", "Kandy", "Ella", "Yala", "Galle",
+  "Mirissa", "Nuwara Eliya", "Negombo", "Trincomalee",
+];
 
-      {/* ============================================================
-          HERO SECTION
-          ============================================================ */}
-      <section className="relative min-h-[92vh] flex items-center overflow-hidden">
+/* ── Stats strip ─────────────────────────────────────────────── */
+const STATS = [
+  { value: "500+", label: "Happy Travellers" },
+  { value: "45+",  label: "Tour Packages" },
+  { value: "4.9★", label: "Average Rating" },
+  { value: "8+",   label: "Years of Experience" },
+];
 
-        {/* Background gradient blobs for visual depth */}
-        <div className="absolute inset-0 -z-10">
-          <div className="absolute top-1/4 -left-40 w-96 h-96 bg-teal-500/20 rounded-full blur-3xl" />
-          <div className="absolute bottom-1/4 -right-40 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl" />
-        </div>
+/* ════════════════════════════════════════════════════════════════
+   HOME PAGE COMPONENT
+   ════════════════════════════════════════════════════════════════ */
+const HomePage = () => (
+  <div className="animate-fade-up">
 
-        <div className="container-custom py-20">
-          <div className="max-w-3xl">
+    {/* ══════════════════════════════════════════════════════
+        SECTION 1 — HERO
+        White background, deep blue typography, two CTA buttons.
+        ══════════════════════════════════════════════════════ */}
+    <section className="relative bg-white overflow-hidden">
 
-            {/* Eyebrow label */}
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 text-sm font-medium mb-6">
-              <MapPin className="w-4 h-4" />
-              Based in Negombo, Sri Lanka 🇱🇰
-            </div>
+      {/* Subtle blue gradient orb in the top-right corner */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full bg-blue-50 opacity-60 blur-3xl"
+      />
 
-            {/* Main headline */}
-            <h1 className="font-display text-5xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6">
-              <span className="text-white">Discover the</span>{" "}
-              <span className="text-gradient">Wonder</span>{" "}
-              <span className="text-white">of Sri Lanka</span>
-            </h1>
+      <div className="container-custom pt-20 pb-24 relative">
+        <div className="max-w-3xl">
 
-            <p className="text-slate-400 text-lg md:text-xl max-w-xl mb-8 leading-relaxed">
-              Handcrafted travel experiences that go beyond sightseeing. Join thousands
-              of adventurers who've trusted GlobeTrek to create the journey of a lifetime.
-            </p>
-
-            {/* Call-to-action buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 mb-12">
-              <Link
-                to="/tours"
-                id="hero-explore-tours-btn"
-                className="group inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-teal-500 hover:bg-teal-400 text-white font-semibold text-lg transition-all duration-300 shadow-lg shadow-teal-500/25 hover:shadow-teal-400/30 hover:-translate-y-0.5"
-              >
-                Explore Tours
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </Link>
-              <Link
-                to="/about"
-                id="hero-learn-more-btn"
-                className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-semibold text-lg transition-all duration-300 border border-slate-700"
-              >
-                Learn More
-              </Link>
-            </div>
-
-            {/* Quick stats */}
-            <div className="flex flex-wrap gap-8 text-sm text-slate-400">
-              {[
-                { value: "500+", label: "Happy Travelers" },
-                { value: "45+", label: "Tour Packages" },
-                { value: "4.9★", label: "Average Rating" },
-                { value: "8+", label: "Years Experience" },
-              ].map(({ value, label }) => (
-                <div key={label}>
-                  <div className="text-2xl font-bold text-white mb-0.5">{value}</div>
-                  <div>{label}</div>
-                </div>
-              ))}
-            </div>
+          {/* Eyebrow label */}
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full
+            bg-blue-50 border border-blue-200 text-blue-700 text-xs font-semibold
+            tracking-wide mb-6">
+            <MapPin className="w-3.5 h-3.5" aria-hidden="true" />
+            Based in Negombo, Sri Lanka 🇱🇰
           </div>
-        </div>
-      </section>
 
-      {/* ============================================================
-          POPULAR DESTINATIONS TAGS
-          ============================================================ */}
-      <section className="bg-slate-800/50 border-y border-slate-700/50 py-6">
-        <div className="container-custom">
-          <div className="flex items-center gap-4 overflow-x-auto pb-1 scrollbar-hide">
-            <span className="text-slate-400 text-sm font-medium whitespace-nowrap flex-shrink-0">
-              Popular:
-            </span>
-            {DESTINATIONS.map((destination) => (
-              <Link
-                key={destination}
-                to={`/tours?search=${destination}`}
-                className="flex-shrink-0 px-4 py-1.5 rounded-full bg-slate-700 hover:bg-teal-500/20 hover:border-teal-500/40 text-slate-300 hover:text-teal-400 text-sm border border-slate-600 transition-all duration-200 whitespace-nowrap"
-              >
-                {destination}
-              </Link>
+          {/* Main headline */}
+          <h1 className="font-display text-5xl md:text-6xl lg:text-7xl font-bold
+            text-gray-900 leading-[1.1] tracking-tight mb-6">
+            Discover the{" "}
+            <span className="text-gradient-blue">Wonder</span>{" "}
+            of Sri Lanka
+          </h1>
+
+          {/* Subheadline */}
+          <p className="text-lg md:text-xl text-gray-500 max-w-2xl mb-8 leading-relaxed">
+            Handcrafted travel experiences that go beyond sightseeing.
+            Join thousands of adventurers who've trusted GlobeTrek to deliver the
+            journey of a lifetime.
+          </p>
+
+          {/* CTA buttons */}
+          <div className="flex flex-col sm:flex-row gap-3 mb-12">
+            <Link
+              to="/tours"
+              id="hero-explore-btn"
+              className="btn btn-primary btn-lg group"
+            >
+              Explore All Tours
+              <ArrowRight
+                className="w-5 h-5 group-hover:translate-x-0.5 transition-transform"
+                aria-hidden="true"
+              />
+            </Link>
+            <Link
+              to="/about"
+              id="hero-about-btn"
+              className="btn btn-ghost btn-lg"
+            >
+              About GlobeTrek
+            </Link>
+          </div>
+
+          {/* Trust checkmarks */}
+          <div className="flex flex-wrap gap-5 mb-12">
+            {[
+              "Free cancellation up to 48 hrs",
+              "Fully licensed & insured",
+              "Expert English-speaking guides",
+            ].map((point) => (
+              <div key={point} className="flex items-center gap-2 text-sm text-gray-500">
+                <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" aria-hidden="true" />
+                {point}
+              </div>
             ))}
           </div>
-        </div>
-      </section>
 
-      {/* ============================================================
-          WHY CHOOSE GLOBETREK SECTION
-          ============================================================ */}
-      <section className="section-padding">
-        <div className="container-custom">
-
-          {/* Section header */}
-          <div className="text-center max-w-2xl mx-auto mb-14">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              Why Travel With <span className="text-teal-400">GlobeTrek?</span>
-            </h2>
-            <p className="text-slate-400 text-lg">
-              We're not just a booking platform — we're your adventure partners,
-              committed to making every moment extraordinary.
-            </p>
-          </div>
-
-          {/* Feature cards grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {FEATURES.map(({ id, Icon, title, description }) => (
-              <div
-                key={id}
-                id={`feature-${id}`}
-                className="glass-card p-6 hover:border-teal-500/30 transition-all duration-300 group hover:-translate-y-1"
-              >
-                {/* Icon badge */}
-                <div className="w-12 h-12 rounded-xl bg-teal-500/10 flex items-center justify-center mb-4 group-hover:bg-teal-500/20 transition-colors">
-                  <Icon className="w-6 h-6 text-teal-400" strokeWidth={1.5} />
-                </div>
-                <h3 className="text-white font-semibold text-lg mb-2">{title}</h3>
-                <p className="text-slate-400 text-sm leading-relaxed">{description}</p>
+          {/* Stats strip */}
+          <div className="flex flex-wrap gap-8">
+            {STATS.map(({ value, label }) => (
+              <div key={label}>
+                <p className="text-2xl font-bold text-gray-900 leading-none">
+                  {value}
+                </p>
+                <p className="text-sm text-gray-500 mt-0.5">{label}</p>
               </div>
             ))}
           </div>
         </div>
-      </section>
+      </div>
+    </section>
 
-      {/* ============================================================
-          CALL-TO-ACTION BANNER
-          ============================================================ */}
-      <section className="section-padding bg-gradient-to-r from-teal-900/40 to-slate-800/40 border-y border-teal-500/10">
-        <div className="container-custom text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            Ready for Your Next Adventure?
-          </h2>
-          <p className="text-slate-400 text-lg mb-8 max-w-lg mx-auto">
-            Browse our curated collection of Sri Lanka tours and book your spot today.
-            Limited availability — don't miss out!
+    {/* ══════════════════════════════════════════════════════
+        SECTION 2 — POPULAR DESTINATIONS (pill filter bar)
+        ══════════════════════════════════════════════════════ */}
+    <section className="bg-gray-50 border-y border-gray-200 py-5">
+      <div className="container-custom">
+        <div className="flex items-center gap-3 overflow-x-auto pb-1 scrollbar-hide">
+          {/* Label */}
+          <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider flex-shrink-0">
+            Popular:
+          </span>
+          {/* Destination pills */}
+          {DESTINATIONS.map((dest) => (
+            <Link
+              key={dest}
+              to={`/tours?search=${encodeURIComponent(dest)}`}
+              className="
+                flex-shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium
+                bg-white border border-gray-200 text-gray-600
+                hover:border-blue-300 hover:text-blue-700 hover:bg-blue-50
+                transition-all duration-150 whitespace-nowrap
+              "
+            >
+              {dest}
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    {/* ══════════════════════════════════════════════════════
+        SECTION 3 — WHY GLOBETREK (feature cards)
+        ══════════════════════════════════════════════════════ */}
+    <section className="section-padding bg-white">
+      <div className="container-custom">
+
+        {/* Section header */}
+        <div className="text-center max-w-xl mx-auto mb-12">
+          <p className="text-xs font-bold uppercase tracking-widest text-blue-600 mb-2">
+            Why Choose Us
           </p>
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 leading-tight">
+            Travel Made Simple,{" "}
+            <span className="text-gradient-blue">Memorable & Safe</span>
+          </h2>
+          <p className="text-gray-500 text-lg leading-relaxed">
+            We're not just a booking platform — we're your dedicated adventure partners,
+            committed to exceeding your expectations at every step.
+          </p>
+        </div>
+
+        {/* 4-column card grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          {FEATURES.map(({ id, icon: Icon, color, title, description }) => (
+            <article
+              key={id}
+              id={`feature-card-${id}`}
+              className="card card-hover p-6"
+            >
+              {/* Icon badge */}
+              <div className={`
+                w-12 h-12 rounded-xl flex items-center justify-center
+                border mb-4 ${ICON_COLORS[color]}
+              `}>
+                <Icon className="w-6 h-6" strokeWidth={1.75} aria-hidden="true" />
+              </div>
+              <h3 className="text-base font-bold text-gray-900 mb-2">{title}</h3>
+              <p className="text-sm text-gray-500 leading-relaxed">{description}</p>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    {/* ══════════════════════════════════════════════════════
+        SECTION 4 — FULL-WIDTH CTA BANNER
+        ══════════════════════════════════════════════════════ */}
+    <section className="bg-blue-600 py-16">
+      <div className="container-custom text-center">
+        <p className="text-xs font-bold uppercase tracking-widest text-blue-200 mb-3">
+          Limited Availability
+        </p>
+        <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 leading-tight">
+          Ready for Your Next Adventure?
+        </h2>
+        <p className="text-blue-200 text-lg mb-8 max-w-md mx-auto leading-relaxed">
+          Browse 45+ curated Sri Lanka tours and lock in your dates today
+          before they fill up.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link
             to="/tours"
             id="cta-browse-tours-btn"
-            className="inline-flex items-center gap-2 px-10 py-4 rounded-xl bg-teal-500 hover:bg-teal-400 text-white font-bold text-lg transition-all duration-300 shadow-xl shadow-teal-500/20 hover:-translate-y-0.5"
+            className="
+              inline-flex items-center justify-center gap-2
+              px-8 py-3.5 rounded-xl bg-white text-blue-700
+              text-sm font-bold shadow-lg
+              hover:bg-blue-50 transition-colors duration-200
+            "
           >
             Browse All Tours
-            <ArrowRight className="w-5 h-5" />
+            <ChevronRight className="w-4 h-4" aria-hidden="true" />
+          </Link>
+          <Link
+            to="/contact"
+            id="cta-contact-btn"
+            className="
+              inline-flex items-center justify-center gap-2
+              px-8 py-3.5 rounded-xl border border-blue-400 text-white
+              text-sm font-semibold
+              hover:bg-blue-700 transition-colors duration-200
+            "
+          >
+            Talk to Our Team
           </Link>
         </div>
-      </section>
-    </div>
-  );
-};
+      </div>
+    </section>
+
+  </div>
+);
 
 export default HomePage;

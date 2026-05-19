@@ -1,72 +1,80 @@
 /**
  * server.js — GlobeTrek Adventures Express Server Entry Point
  * ============================================================
- * This file bootstraps the Express application:
- *  1. Loads environment variables from .env
- *  2. Connects to the MongoDB database
- *  3. Registers global middleware (CORS, JSON parsing, logging)
- *  4. Mounts all API route modules
- *  5. Registers the global error handler
- *  6. Starts listening on the configured port
+ * Bootstraps the entire backend application in this order:
+ *
+ *  1. Load environment variables from .env (must be first)
+ *  2. Connect to Neon PostgreSQL and run schema initialization
+ *  3. Register global middleware (CORS, JSON parsing, request logging)
+ *  4. Mount all API route modules under /api/*
+ *  5. Register the global error handler (must be last)
+ *  6. Start listening for incoming HTTP connections
+ *
+ * Changed from previous version:
+ *  - Replaced Mongoose/MongoDB with `pg` (node-postgres) for Neon PostgreSQL
+ *  - `initializeDatabase()` now creates all tables on startup if they don't exist
+ *  - Removed the old `/api/tours` route; replaced with `/api/packages`
+ *  - Added `/api/inquiries` route for customer support tickets
  */
+
+// Step 1: Load .env variables FIRST — all subsequent imports may depend on them
+const dotenv = require("dotenv");
+dotenv.config();
 
 const express = require("express");
 const cors = require("cors");
 const morgan = require("morgan");
-const dotenv = require("dotenv");
 
-// Load environment variables from the .env file BEFORE importing anything
-// that depends on them (like the database connection)
-dotenv.config();
+// Database setup
+const { testConnection } = require("./src/config/db");
+const initializeDatabase = require("./src/config/initDb");
 
-const connectDB = require("./src/config/db");
-const authRoutes = require("./src/routes/authRoutes");
-const tourRoutes = require("./src/routes/tourRoutes");
+// Route modules
+const authRoutes    = require("./src/routes/authRoutes");
+const packageRoutes = require("./src/routes/packageRoutes");
 const bookingRoutes = require("./src/routes/bookingRoutes");
+const inquiryRoutes = require("./src/routes/inquiryRoutes");
+
+// Error handling middleware
 const { notFound, globalErrorHandler } = require("./src/middleware/errorMiddleware");
 
-// ---- Initialize the Express Application ----
+// ---- Create the Express Application ----
 const app = express();
-
-// ---- Connect to MongoDB ----
-// This is called immediately; the server will start even if the DB
-// is still connecting, but requests will fail until connected.
-connectDB();
 
 // ============================================================
 // GLOBAL MIDDLEWARE
 // ============================================================
 
-// Enable Cross-Origin Resource Sharing for the React frontend
+// CORS — Allow requests from the React frontend (Vite dev server)
 app.use(
   cors({
     origin: process.env.CLIENT_URL || "http://localhost:5173",
-    credentials: true, // Allow cookies and Authorization headers
+    credentials: true, // Allow Authorization headers and cookies
   })
 );
 
-// Parse incoming JSON request bodies (e.g., POST/PATCH payloads)
+// Parse incoming JSON request bodies (limits to 10mb to prevent payload abuse)
 app.use(express.json({ limit: "10mb" }));
 
-// Parse URL-encoded form data (for form submissions)
+// Parse URL-encoded form data (for HTML form submissions)
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-// HTTP request logger — uses "dev" format in development, "combined" in production
-if (process.env.NODE_ENV === "development") {
-  app.use(morgan("dev")); // Compact, colorful output for development
-} else {
-  app.use(morgan("combined")); // Apache-style combined log format for production
-}
+// HTTP request logging:
+//  - "dev" mode: colorful, compact output for development
+//  - "combined" mode: Apache-style detailed logs for production
+app.use(morgan(process.env.NODE_ENV === "development" ? "dev" : "combined"));
 
 // ============================================================
 // HEALTH CHECK ROUTE
 // ============================================================
-// Quick endpoint to verify the server is running (used by load balancers, etc.)
+// Used by load balancers, uptime monitors, and CI pipelines to
+// verify the server is running without hitting the database.
 app.get("/api/health", (req, res) => {
   res.status(200).json({
     success: true,
-    message: "🌍 GlobeTrek Adventures API is live and running!",
+    message: "🌍 GlobeTrek Adventures API is healthy and running!",
     environment: process.env.NODE_ENV,
+    database: "Neon PostgreSQL",
     timestamp: new Date().toISOString(),
   });
 });
@@ -74,29 +82,56 @@ app.get("/api/health", (req, res) => {
 // ============================================================
 // API ROUTE MODULES
 // ============================================================
-// All routes are prefixed with /api for clear API versioning
+// Each module is mounted with a base path. All API routes are
+// prefixed with /api for clear separation from the frontend.
 
-app.use("/api/auth", authRoutes);       // Authentication: register, login, profile
-app.use("/api/tours", tourRoutes);      // Tour packages: list, detail, CRUD
-app.use("/api/bookings", bookingRoutes); // Bookings: create, view, manage
-
-// ============================================================
-// ERROR HANDLING (must be registered AFTER all routes)
-// ============================================================
-
-// Handle requests to undefined routes (returns 404)
-app.use(notFound);
-
-// Global error handler — catches all errors forwarded via next(error)
-app.use(globalErrorHandler);
+app.use("/api/auth",     authRoutes);    // Authentication: /register, /login, /me
+app.use("/api/packages", packageRoutes); // Travel packages: CRUD with role-based access
+app.use("/api/bookings", bookingRoutes); // Bookings: create, view, update status
+app.use("/api/inquiries", inquiryRoutes); // Customer inquiries / support tickets
 
 // ============================================================
-// START THE SERVER
+// ERROR HANDLING
 // ============================================================
-const PORT = process.env.PORT || 5000;
+// These MUST be registered after all routes.
+// Express identifies error handlers by their 4-argument signature.
 
-app.listen(PORT, () => {
-  console.log(`🚀 GlobeTrek Adventures server running on port ${PORT}`);
-  console.log(`   Environment : ${process.env.NODE_ENV}`);
-  console.log(`   API Base URL: http://localhost:${PORT}/api`);
-});
+app.use(notFound);           // Catches requests to undefined routes → 404
+app.use(globalErrorHandler); // Handles all errors passed via next(error)
+
+// ============================================================
+// SERVER STARTUP
+// ============================================================
+const PORT = parseInt(process.env.PORT || "5000", 10);
+
+/**
+ * startServer — Initializes the database, then starts listening.
+ * Using an async function allows us to `await` the DB setup before
+ * accepting traffic, preventing requests from hitting uninitialized tables.
+ */
+const startServer = async () => {
+  try {
+    // Step 2: Verify the database connection is reachable
+    await testConnection();
+
+    // Step 3: Create tables and indexes if they don't already exist
+    await initializeDatabase();
+
+    // Step 4: Start accepting HTTP requests
+    app.listen(PORT, () => {
+      console.log("═══════════════════════════════════════════════");
+      console.log("  🚀 GlobeTrek Adventures API — Server Started");
+      console.log("═══════════════════════════════════════════════");
+      console.log(`  Environment : ${process.env.NODE_ENV}`);
+      console.log(`  Port        : ${PORT}`);
+      console.log(`  API Base    : http://localhost:${PORT}/api`);
+      console.log(`  Health Check: http://localhost:${PORT}/api/health`);
+      console.log("═══════════════════════════════════════════════");
+    });
+  } catch (error) {
+    console.error("❌ Server failed to start:", error.message);
+    process.exit(1); // Exit with error code so PM2 / Docker can restart the container
+  }
+};
+
+startServer();

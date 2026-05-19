@@ -105,6 +105,24 @@ export const AuthProvider = ({ children }) => {
     setCurrentUser(null);
   }, []);
 
+  /**
+   * refreshUser — Re-fetches the user's profile from the backend and updates
+   * the in-memory state. Call this after a profile update so the navbar and
+   * any other consumers immediately reflect the new data.
+   */
+  const refreshUser = useCallback(async () => {
+    try {
+      const response = await getMyProfile();
+      const updatedUser = response.data.user;
+      setCurrentUser(updatedUser);
+      // Keep localStorage in sync with the refreshed profile
+      localStorage.setItem(USER_KEY, JSON.stringify(updatedUser));
+    } catch (error) {
+      // Silently ignore refresh failures — the stale data is still valid
+      console.warn("Could not refresh user profile:", error.message);
+    }
+  }, []);
+
   // The value object exposed to all consumers of this context
   const contextValue = {
     currentUser,         // The authenticated user object (or null)
@@ -114,6 +132,7 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
+    refreshUser,         // Call after profile updates to sync navbar/header
   };
 
   return (

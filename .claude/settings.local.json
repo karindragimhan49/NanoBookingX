@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-ChildItem -Path \"D:\\\\DEVOPS\\\\NanoBookingX\" -Recurse -Exclude \"node_modules\",\".git\" -File | Select-Object @{Label=\"RelativePath\";Expression={$_.FullName.Replace\\(\"D:\\\\DEVOPS\\\\NanoBookingX\\\\\",\"\"\\)}},@{Label=\"Extension\";Expression={$_.Extension}} | Format-Table -AutoSize)",
+      "Bash(node -e \"const icons = require\\('./node_modules/lucide-react/dist/cjs/lucide-react.js'\\); const social = Object.keys\\(icons\\).filter\\(k => /facebook|instagram|twitter|youtube|x$/i.test\\(k\\)\\); console.log\\(social\\);\")",
+      "Bash(node *)",
+      "Bash(npx vite *)",
+      "Bash(curl -s http://localhost:5000/api/health)",
+      "Bash(mongod --version)",
+      "PowerShell(Start-Process \"C:\\\\Program Files\\\\Docker\\\\Docker\\\\Docker Desktop.exe\" -ErrorAction SilentlyContinue; Start-Sleep -Seconds 3; Write-Host \"Docker Desktop launch attempted\")",
+      "Bash(npm install *)",
+      "Bash(xargs grep -l \"axios\\\\|baseURL\\\\|localhost:5000\")",
+      "Read(//c/Users/acer/.cache/mongodb-binaries/**)",
+      "Read(//c/Users/acer/AppData/Local/**)",
+      "Bash(pkill -f \"node server.js\")",
+      "Bash(node server.js)",
+      "Bash(echo \"Backend restarted \\(PID: $!\\)\")",
+      "Bash(kill -9 1574 1187 1787 932 896 2053)",
+      "Bash(MONGOMS_VERSION=test123 node *)",
+      "Bash(MONGOMS_VERSION=6.0.12 node -e \"const r = require\\('./src/config/resolveConfig'\\); console.log\\('resolved:', process.env.MONGOMS_VERSION\\)\")",
+      "Bash(kill -9 2217)",
+      "Bash(rm -f /c/Users/acer/.cache/mongodb-binaries/*.downloading /c/Users/acer/.cache/mongodb-binaries/*.lock)",
+      "Bash(echo \"Backend PID: $!\")",
+      "Bash(kill -9 9676)",
+      "Bash(awk '{print $1}')",
+      "Bash(xargs kill -9)",
+      "Bash(curl *)"
+    ]
+  }
+}

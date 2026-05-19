@@ -1,71 +1,138 @@
 /**
- * authMiddleware.js — JWT Authentication Middleware
- * --------------------------------------------------
- * Protects private routes by verifying the JSON Web Token
- * attached to incoming requests. Attaches the decoded user
- * payload to `req.user` so downstream controllers can use it.
+ * authMiddleware.js — JWT Authentication & Role Authorization Middleware
+ * =======================================================================
+ *
+ * `protect` — Verifies the JWT in the Authorization header.
+ *   On success: populates `req.user` with the authenticated user's data.
+ *   On failure: returns a 401 Unauthorized response.
+ *
+ * `optionalAuth` — Same as `protect` but does NOT block unauthenticated requests.
+ *   If a valid token is present, `req.user` is populated.
+ *   If no token is present, `req.user` stays null and the request continues.
+ *   Used for public routes where auth enhances but is not required
+ *   (e.g., the inquiry submission endpoint, which auto-links to a user if logged in).
+ *
+ * `authorizeRoles(...roles)` — A middleware factory that blocks users whose
+ *   role is not in the allowed list. Must be used AFTER `protect`.
+ *   Usage: router.post('/admin-only', protect, authorizeRoles('admin'), handler)
  */
 
 const jwt = require("jsonwebtoken");
-const User = require("../models/User");
+const { findUserById } = require("../queries/userQueries");
 
 /**
- * protect — Middleware that guards routes requiring authentication.
- * Expects the token in the Authorization header as "Bearer <token>".
+ * protect — Guards routes that require a valid JWT.
+ * Expects: Authorization: Bearer <token>
  */
 const protect = async (req, res, next) => {
   let token;
 
-  // Check if the Authorization header exists and starts with "Bearer"
+  // Check if the Authorization header exists and follows "Bearer <token>" format
   if (
     req.headers.authorization &&
-    req.headers.authorization.startsWith("Bearer")
+    req.headers.authorization.startsWith("Bearer ")
   ) {
-    try {
-      // Extract the token part (split "Bearer <token>" and take the second element)
-      token = req.headers.authorization.split(" ")[1];
+    token = req.headers.authorization.split(" ")[1];
+  }
 
-      // Verify the token using the secret key from environment variables
-      const decodedPayload = jwt.verify(token, process.env.JWT_SECRET);
+  if (!token) {
+    return res.status(401).json({
+      success: false,
+      message: "Access denied. No authentication token provided.",
+    });
+  }
 
-      // Find the user by the ID stored in the token payload
-      // Exclude the password field from the returned user object
-      req.user = await User.findById(decodedPayload.id).select("-password");
+  try {
+    // Verify the token's signature and check it hasn't expired
+    const decodedPayload = jwt.verify(token, process.env.JWT_SECRET);
 
-      // If no user is found (e.g., account deleted), deny access
-      if (!req.user) {
-        return res.status(401).json({ message: "User not found. Access denied." });
-      }
+    // Fetch the latest user data from PostgreSQL using the ID embedded in the token.
+    // This ensures that deactivated accounts can't continue using old tokens.
+    const userResult = await findUserById(decodedPayload.id);
+    const user = userResult.rows[0];
 
-      // Token is valid — proceed to the next middleware or controller
-      next();
-    } catch (error) {
-      // Token verification failed (expired, tampered, etc.)
-      console.error("Token verification failed:", error.message);
-      return res.status(401).json({ message: "Not authorized. Invalid token." });
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "The user associated with this token no longer exists.",
+      });
     }
-  } else {
-    // No token was provided in the header
-    return res.status(401).json({ message: "Not authorized. No token provided." });
+
+    if (!user.is_active) {
+      return res.status(403).json({
+        success: false,
+        message: "This account has been deactivated. Please contact support.",
+      });
+    }
+
+    // Attach the user object to the request so downstream controllers can use it
+    req.user = user;
+    next();
+  } catch (error) {
+    // jwt.verify throws for expired, malformed, or tampered tokens
+    if (error.name === "TokenExpiredError") {
+      return res.status(401).json({
+        success: false,
+        message: "Your session has expired. Please log in again.",
+      });
+    }
+
+    return res.status(401).json({
+      success: false,
+      message: "Invalid authentication token.",
+    });
   }
 };
 
 /**
- * authorizeRoles — Middleware factory that restricts access based on user roles.
- * Usage: router.get('/admin-only', protect, authorizeRoles('admin'))
+ * optionalAuth — Like `protect`, but allows unauthenticated requests through.
+ * Sets req.user if a valid token is provided; leaves it null otherwise.
+ */
+const optionalAuth = async (req, res, next) => {
+  let token;
+
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith("Bearer ")
+  ) {
+    token = req.headers.authorization.split(" ")[1];
+  }
+
+  // No token provided — continue as a guest (req.user remains undefined)
+  if (!token) {
+    req.user = null;
+    return next();
+  }
+
+  try {
+    const decodedPayload = jwt.verify(token, process.env.JWT_SECRET);
+    const userResult = await findUserById(decodedPayload.id);
+    req.user = userResult.rows[0] || null;
+    next();
+  } catch (error) {
+    // Invalid token on an optional route is silently ignored
+    req.user = null;
+    next();
+  }
+};
+
+/**
+ * authorizeRoles — Middleware factory for role-based access control.
+ * Must always be placed AFTER `protect` in the middleware chain.
  *
- * @param {...string} roles - Allowed roles (e.g., 'admin', 'guide', 'customer')
+ * @param {...string} roles — The roles permitted to access the route
+ *                           e.g., authorizeRoles('staff', 'admin')
  */
 const authorizeRoles = (...roles) => {
   return (req, res, next) => {
-    // Check if the current user's role is in the list of allowed roles
-    if (!roles.includes(req.user.role)) {
+    if (!req.user || !roles.includes(req.user.role)) {
       return res.status(403).json({
-        message: `Access forbidden. Role '${req.user.role}' is not permitted to access this resource.`,
+        success: false,
+        message: `Access forbidden. Your role ('${req.user?.role}') does not have permission to perform this action.`,
       });
     }
     next();
   };
 };
 
-module.exports = { protect, authorizeRoles };
+module.exports = { protect, optionalAuth, authorizeRoles };

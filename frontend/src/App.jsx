@@ -1,159 +1,167 @@
 /**
  * App.jsx — Root Application Component & Route Configuration
  * -----------------------------------------------------------
- * Sets up the entire client-side routing tree using React Router v6.
+ * Bootstraps the entire client-side application:
+ *   1. BrowserRouter  — enables client-side URL routing.
+ *   2. AuthProvider   — provides global auth state to all components.
+ *   3. Toaster        — global toast notification system (light theme).
+ *   4. AppRoutes      — the full route tree (separated to allow useAuth inside AuthProvider).
  *
  * Route Structure:
  *  /                     → HomePage           (public)
  *  /tours                → ToursPage          (public)
  *  /tours/:id            → TourDetailPage     (public)
- *  /login                → LoginPage          (public, redirect if auth'd)
- *  /register             → RegisterPage       (public, redirect if auth'd)
- *  /dashboard            → DashboardPage      (protected — any logged-in user)
- *  /admin/*              → AdminLayout/Pages  (protected — admin only)
  *  /about                → AboutPage          (public)
  *  /contact              → ContactPage        (public)
+ *  /login                → LoginPage          (public, redirects if already authenticated)
+ *  /register             → RegisterPage       (public, redirects if already authenticated)
+ *  /dashboard            → DashboardPage      (protected — any authenticated user)
+ *  /admin                → DashboardPage      (protected — admin role only)
  *  *                     → NotFoundPage       (404 catch-all)
+ *
+ * Lazy loading:
+ *   All pages except HomePage and NotFoundPage are lazy-loaded via React.lazy().
+ *   This splits the JS bundle so the initial download is smaller, and each
+ *   page's code only loads when the user first navigates to it.
  */
 
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 
-// ---- Context Providers ----
+// ---- Context ----
 import { AuthProvider, useAuth } from "./context/AuthContext";
 
-// ---- Layout ----
+// ---- Layout & Guards ----
 import Layout from "./components/layout/Layout";
-
-// ---- Route Guard ----
 import ProtectedRoute from "./components/common/ProtectedRoute";
+import { PageSpinner } from "./components/common/LoadingSpinner";
 
-// ---- Page Components ----
-// Public pages
-import HomePage from "./pages/HomePage";
+// ---- Eagerly loaded pages (small, always needed) ----
+import HomePage    from "./pages/HomePage";
 import NotFoundPage from "./pages/NotFoundPage";
 
-// Lazy-loaded pages (reduces initial bundle size)
-import { lazy, Suspense } from "react";
+// ---- Lazily loaded pages (split into separate chunks) ----
+const ToursPage      = lazy(() => import("./pages/ToursPage"));
+const TourDetailPage = lazy(() => import("./pages/TourDetailPage"));
+const LoginPage      = lazy(() => import("./pages/LoginPage"));
+const RegisterPage   = lazy(() => import("./pages/RegisterPage"));
+const DashboardPage  = lazy(() => import("./pages/DashboardPage"));
+const AboutPage      = lazy(() => import("./pages/AboutPage"));
+const ContactPage    = lazy(() => import("./pages/ContactPage"));
 
-const ToursPage       = lazy(() => import("./pages/ToursPage"));
-const TourDetailPage  = lazy(() => import("./pages/TourDetailPage"));
-const LoginPage       = lazy(() => import("./pages/LoginPage"));
-const RegisterPage    = lazy(() => import("./pages/RegisterPage"));
-const DashboardPage   = lazy(() => import("./pages/DashboardPage"));
-const AboutPage       = lazy(() => import("./pages/AboutPage"));
-const ContactPage     = lazy(() => import("./pages/ContactPage"));
+/* ──────────────────────────────────────────────────────────────
+   PageLoader — Suspense fallback shown while a lazy page bundle
+   is downloading. Uses the shared PageSpinner for consistency.
+   ────────────────────────────────────────────────────────────── */
+const PageLoader = () => <PageSpinner label="Loading page…" />;
 
-/**
- * PageLoader — Displayed while lazy-loaded pages are fetching their bundle.
- */
-const PageLoader = () => (
-  <div className="flex items-center justify-center min-h-[60vh]">
-    <div className="w-10 h-10 border-4 border-teal-500 border-t-transparent rounded-full animate-spin" />
-  </div>
-);
-
-/**
- * PublicOnlyRoute — Redirects authenticated users away from login/register pages.
- * If a user is already logged in, they shouldn't need to re-register.
- */
+/* ──────────────────────────────────────────────────────────────
+   PublicOnlyRoute — Redirects authenticated users away from
+   the login and register pages (they don't need to see them).
+   ────────────────────────────────────────────────────────────── */
 const PublicOnlyRoute = ({ children }) => {
   const { isAuthenticated, isLoadingAuth } = useAuth();
 
+  // Wait for auth restoration before deciding where to redirect
   if (isLoadingAuth) return <PageLoader />;
 
-  // Redirect authenticated users to the dashboard
+  // If already logged in, send to dashboard instead of showing login/register
   return isAuthenticated ? <Navigate to="/dashboard" replace /> : children;
 };
 
-/**
- * AppRoutes — Contains the full routing tree.
- * Separated from App to allow useAuth() to be called inside AuthProvider.
- */
-const AppRoutes = () => {
-  return (
-    <Suspense fallback={<PageLoader />}>
-      <Routes>
-        {/* All routes wrapped in Layout (Navbar + Footer) */}
-        <Route element={<Layout />}>
+/* ──────────────────────────────────────────────────────────────
+   AppRoutes — The complete route tree.
+   Separated from App so that useAuth() can be called inside
+   the AuthProvider context (it throws if used outside).
+   ────────────────────────────────────────────────────────────── */
+const AppRoutes = () => (
+  <Suspense fallback={<PageLoader />}>
+    <Routes>
 
-          {/* ---- Public Routes ---- */}
-          <Route path="/" element={<HomePage />} />
-          <Route path="/tours" element={<ToursPage />} />
-          <Route path="/tours/:id" element={<TourDetailPage />} />
-          <Route path="/about" element={<AboutPage />} />
-          <Route path="/contact" element={<ContactPage />} />
+      {/* Every route is wrapped in Layout (Navbar + Footer) */}
+      <Route element={<Layout />}>
 
-          {/* ---- Auth Routes (only for unauthenticated users) ---- */}
-          <Route
-            path="/login"
-            element={
-              <PublicOnlyRoute>
-                <LoginPage />
-              </PublicOnlyRoute>
-            }
-          />
-          <Route
-            path="/register"
-            element={
-              <PublicOnlyRoute>
-                <RegisterPage />
-              </PublicOnlyRoute>
-            }
-          />
+        {/* ── Public routes — no login required ── */}
+        <Route path="/"         element={<HomePage />} />
+        <Route path="/tours"    element={<ToursPage />} />
+        <Route path="/tours/:id" element={<TourDetailPage />} />
+        <Route path="/about"    element={<AboutPage />} />
+        <Route path="/contact"  element={<ContactPage />} />
 
-          {/* ---- Protected Routes (any logged-in user) ---- */}
-          <Route element={<ProtectedRoute />}>
-            <Route path="/dashboard" element={<DashboardPage />} />
-          </Route>
-
-          {/* ---- Admin-Only Routes ---- */}
-          <Route element={<ProtectedRoute requiredRole="admin" />}>
-            <Route path="/admin" element={<DashboardPage />} />
-          </Route>
-
-          {/* ---- 404 Catch-All ---- */}
-          <Route path="*" element={<NotFoundPage />} />
-        </Route>
-      </Routes>
-    </Suspense>
-  );
-};
-
-/**
- * App — The root component. Wraps everything with:
- *  - BrowserRouter: enables client-side routing
- *  - AuthProvider: provides global auth state
- *  - Toaster: enables toast notifications from anywhere in the app
- */
-const App = () => {
-  return (
-    <BrowserRouter>
-      <AuthProvider>
-        {/* Global toast notification system (positioned top-right) */}
-        <Toaster
-          position="top-right"
-          toastOptions={{
-            duration: 4000,
-            style: {
-              background: "#1e293b",  // Matches --color-surface
-              color: "#f1f5f9",       // Matches --color-text-primary
-              border: "1px solid #334155",
-              borderRadius: "0.75rem",
-              fontSize: "0.875rem",
-            },
-            success: {
-              iconTheme: { primary: "#0d9488", secondary: "#f1f5f9" },
-            },
-            error: {
-              iconTheme: { primary: "#ef4444", secondary: "#f1f5f9" },
-            },
-          }}
+        {/* ── Auth routes — redirect away if already logged in ── */}
+        <Route
+          path="/login"
+          element={
+            <PublicOnlyRoute>
+              <LoginPage />
+            </PublicOnlyRoute>
+          }
         />
-        <AppRoutes />
-      </AuthProvider>
-    </BrowserRouter>
-  );
-};
+        <Route
+          path="/register"
+          element={
+            <PublicOnlyRoute>
+              <RegisterPage />
+            </PublicOnlyRoute>
+          }
+        />
+
+        {/* ── Protected routes — any authenticated user ── */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/dashboard" element={<DashboardPage />} />
+        </Route>
+
+        {/* ── Admin-only routes ── */}
+        <Route element={<ProtectedRoute requiredRole="admin" />}>
+          <Route path="/admin" element={<DashboardPage />} />
+        </Route>
+
+        {/* ── 404 catch-all ── */}
+        <Route path="*" element={<NotFoundPage />} />
+      </Route>
+
+    </Routes>
+  </Suspense>
+);
+
+/* ══════════════════════════════════════════════════════════════
+   App — Root component.
+   Wraps everything in the router, auth provider, and toast system.
+   ══════════════════════════════════════════════════════════════ */
+const App = () => (
+  <BrowserRouter>
+    <AuthProvider>
+      {/* ── Global toast notifications (light theme) ── */}
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            /* White card with a subtle border — matches the app's light theme */
+            background:   "#ffffff",
+            color:        "#111827",   /* gray-900 */
+            border:       "1px solid #E5E7EB", /* gray-200 */
+            borderRadius: "0.75rem",   /* 12px */
+            fontSize:     "0.875rem",  /* 14px */
+            boxShadow:    "0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04)",
+            padding:      "12px 16px",
+            maxWidth:     "380px",
+          },
+          /* Success icon in emerald green */
+          success: {
+            iconTheme: { primary: "#059669", secondary: "#ffffff" },
+          },
+          /* Error icon in red */
+          error: {
+            iconTheme: { primary: "#DC2626", secondary: "#ffffff" },
+          },
+        }}
+      />
+
+      <AppRoutes />
+    </AuthProvider>
+  </BrowserRouter>
+);
 
 export default App;

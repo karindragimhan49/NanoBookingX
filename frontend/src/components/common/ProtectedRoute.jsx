@@ -1,56 +1,60 @@
 /**
- * ProtectedRoute.jsx — Route Guard Component
- * --------------------------------------------
+ * ProtectedRoute.jsx — Route Authentication Guard
+ * ==================================================
  * Prevents unauthenticated users from accessing protected pages.
- * If not logged in, the user is redirected to the login page.
- * Supports role-based access control (e.g., admin-only routes).
+ * Optionally enforces a required role (e.g., 'admin' only).
  *
- * Usage:
+ * Behaviour:
+ *  - While auth session is being restored: shows the PageSpinner.
+ *  - If not authenticated: redirects to /login, saving the intended
+ *    destination in router state so the login page can redirect back.
+ *  - If authenticated but wrong role: redirects to home (/).
+ *  - If all checks pass: renders the child route via <Outlet />.
+ *
+ * Usage in App.jsx:
+ *   // Any authenticated user:
  *   <Route element={<ProtectedRoute />}>
- *     <Route path="/dashboard" element={<Dashboard />} />
+ *     <Route path="/dashboard" element={<DashboardPage />} />
  *   </Route>
  *
- *   // Admin-only:
+ *   // Admin only:
  *   <Route element={<ProtectedRoute requiredRole="admin" />}>
  *     <Route path="/admin" element={<AdminPanel />} />
  *   </Route>
+ *
+ * Props:
+ *   requiredRole (string | null) — If provided, the user's role must
+ *                                   match this value, or they are redirected.
  */
 
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { PageSpinner } from "./LoadingSpinner";
 
-/**
- * ProtectedRoute — Guards routes that require authentication.
- *
- * @param {string} requiredRole - Optional role required (e.g., "admin")
- */
 const ProtectedRoute = ({ requiredRole = null }) => {
   const { isAuthenticated, currentUser, isLoadingAuth } = useAuth();
-  const location = useLocation(); // Capture the current path for redirect-back
+  const location = useLocation(); // Capture current URL for post-login redirect
 
-  // Show nothing (or a spinner) while the auth state is being determined
-  // This prevents a flash of the login page on refresh for authenticated users
+  /* While auth state is being determined (token verification in progress),
+     show a full-page spinner to avoid a flash of the wrong page */
   if (isLoadingAuth) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="w-10 h-10 border-4 border-teal-500 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
+    return <PageSpinner label="Checking your session…" />;
   }
 
-  // If not authenticated, redirect to login page.
-  // Save the current path in state so we can redirect back after login.
+  /* Not authenticated → redirect to login.
+     Pass `from` in router state so the LoginPage can redirect back
+     after a successful login (e.g., the user tried to access /dashboard). */
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // If a specific role is required, verify the user has it
+  /* Authenticated but wrong role → redirect to home.
+     This prevents e.g. a customer from accessing /admin. */
   if (requiredRole && currentUser?.role !== requiredRole) {
-    // User is logged in but doesn't have the required role — redirect home
     return <Navigate to="/" replace />;
   }
 
-  // Access granted — render the child route(s)
+  /* All checks passed — render the child route */
   return <Outlet />;
 };
 

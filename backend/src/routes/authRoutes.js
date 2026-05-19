@@ -1,7 +1,12 @@
 /**
  * authRoutes.js — Authentication Routes
- * ----------------------------------------
- * Defines the API endpoints for user registration, login, and profile retrieval.
+ * ========================================
+ * Maps HTTP methods and paths to the authentication controller functions.
+ *
+ * Routes:
+ *   POST /api/auth/register  → Register a new customer account (public)
+ *   POST /api/auth/login     → Log in and receive a JWT (public)
+ *   GET  /api/auth/me        → Get own profile (protected — any role)
  */
 
 const express = require("express");
@@ -10,13 +15,11 @@ const router = express.Router();
 const { registerUser, loginUser, getMyProfile } = require("../controllers/authController");
 const { protect } = require("../middleware/authMiddleware");
 
-// POST /api/auth/register — Register a new user (public)
+// Public routes — no authentication needed
 router.post("/register", registerUser);
+router.post("/login",    loginUser);
 
-// POST /api/auth/login — Authenticate user and receive JWT (public)
-router.post("/login", loginUser);
-
-// GET /api/auth/me — Get the logged-in user's profile (protected)
+// Protected route — requires a valid JWT in the Authorization header
 router.get("/me", protect, getMyProfile);
 
 module.exports = router;

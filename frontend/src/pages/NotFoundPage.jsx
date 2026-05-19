@@ -1,48 +1,55 @@
 /**
  * NotFoundPage.jsx — 404 Page
- * ----------------------------
- * Displayed when the user navigates to a route that doesn't exist.
- * Provides a friendly message and navigation back to the home page.
+ * ============================
+ * Shown when the user navigates to a route that doesn't exist.
+ * White background, clear messaging, and two helpful navigation buttons.
  */
 
 import { Link } from "react-router-dom";
-import { Home, Compass } from "lucide-react";
+import { Home, Compass, ArrowRight } from "lucide-react";
 
-const NotFoundPage = () => {
-  return (
-    <div className="flex flex-col items-center justify-center min-h-[80vh] text-center px-4 animate-fade-in">
-      {/* Large 404 display */}
-      <div className="text-9xl font-black text-teal-500/20 leading-none select-none mb-2">
-        404
-      </div>
+const NotFoundPage = () => (
+  <div className="min-h-[80vh] flex flex-col items-center justify-center px-4 text-center bg-white animate-fade-up">
 
-      <Compass className="w-16 h-16 text-teal-400 mb-6 animate-spin" style={{ animationDuration: "8s" }} />
-
-      <h1 className="text-3xl font-bold text-white mb-3">You've Ventured Off the Map</h1>
-      <p className="text-slate-400 text-lg max-w-md mb-8">
-        The page you're looking for doesn't exist. Perhaps the adventure lies elsewhere?
-      </p>
-
-      {/* Navigation buttons */}
-      <div className="flex gap-4">
-        <Link
-          to="/"
-          id="not-found-home-btn"
-          className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-teal-500 hover:bg-teal-400 text-white font-semibold transition-all duration-200"
-        >
-          <Home className="w-4 h-4" />
-          Back to Home
-        </Link>
-        <Link
-          to="/tours"
-          id="not-found-tours-btn"
-          className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold transition-all duration-200 border border-slate-700"
-        >
-          Browse Tours
-        </Link>
-      </div>
+    {/* Large decorative 404 number */}
+    <div className="text-[9rem] font-black text-gray-100 leading-none select-none mb-4">
+      404
     </div>
-  );
-};
+
+    {/* Compass icon */}
+    <div className="w-16 h-16 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center mb-6">
+      <Compass className="w-8 h-8 text-blue-600" strokeWidth={1.5} />
+    </div>
+
+    <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
+      You've Ventured Off the Map
+    </h1>
+
+    <p className="text-gray-500 text-base md:text-lg max-w-sm mb-8 leading-relaxed">
+      The page you're looking for doesn't exist or may have been moved.
+      Let's get you back on track.
+    </p>
+
+    {/* Navigation buttons */}
+    <div className="flex flex-col sm:flex-row gap-3">
+      <Link
+        to="/"
+        id="not-found-home-btn"
+        className="btn btn-primary btn-lg"
+      >
+        <Home className="w-4 h-4" aria-hidden="true" />
+        Back to Home
+      </Link>
+      <Link
+        to="/tours"
+        id="not-found-tours-btn"
+        className="btn btn-ghost btn-lg"
+      >
+        Browse Tours
+        <ArrowRight className="w-4 h-4" aria-hidden="true" />
+      </Link>
+    </div>
+  </div>
+);
 
 export default NotFoundPage;
