@@ -103,6 +103,8 @@
 
 .storyImages {
   position: relative;
+  padding-bottom: 28px;
+  padding-right: 28px;
 }
 
 .imgMain {

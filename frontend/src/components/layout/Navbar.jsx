@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { Menu, X, ChevronDown, Globe, User, LogOut, LayoutDashboard } from 'lucide-react';
+import { Menu, X, ChevronDown, Globe, LogOut, LayoutDashboard } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import styles from './Navbar.module.css';
 
@@ -10,12 +10,23 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', onScroll);
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+
+  useEffect(() => {
+    const onClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    if (dropdownOpen) document.addEventListener('mousedown', onClickOutside);
+    return () => document.removeEventListener('mousedown', onClickOutside);
+  }, [dropdownOpen]);
 
   const handleLogout = () => {
     logout();
@@ -56,7 +67,7 @@ export default function Navbar() {
 
         <div className={styles.actions}>
           {isAuthenticated ? (
-            <div className={styles.userMenu}>
+            <div className={styles.userMenu} ref={dropdownRef}>
               <button
                 className={styles.userBtn}
                 onClick={() => setDropdownOpen(o => !o)}
@@ -111,8 +122,19 @@ export default function Navbar() {
           <div className={styles.mobileDivider} />
           {isAuthenticated ? (
             <>
-              <Link to="/dashboard" className={styles.mobileLink} onClick={() => setMobileOpen(false)}>Dashboard</Link>
-              <button className={`${styles.mobileLink} ${styles.mobileLogout}`} onClick={() => { handleLogout(); setMobileOpen(false); }}>Sign Out</button>
+              <div className={styles.mobileUser}>
+                <div className={styles.mobileAvatar}>{user?.fullName?.charAt(0) || 'U'}</div>
+                <div>
+                  <p className={styles.mobileUserName}>{user?.fullName}</p>
+                  <p className={styles.mobileUserEmail}>{user?.email}</p>
+                </div>
+              </div>
+              <Link to="/dashboard" className={styles.mobileLink} onClick={() => setMobileOpen(false)}>
+                <LayoutDashboard size={15} /> Dashboard
+              </Link>
+              <button className={`${styles.mobileLink} ${styles.mobileLogout}`} onClick={() => { handleLogout(); setMobileOpen(false); }}>
+                <LogOut size={15} /> Sign Out
+              </button>
             </>
           ) : (
             <div className={styles.mobileAuth}>

@@ -15,9 +15,9 @@
   --clr-border: #E5E7EB;
   --clr-border-light: #F3F4F6;
 
-  --font-display: 'Playfair Display', Georgia, serif;
-  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-accent: 'Cormorant Garamond', Georgia, serif;
+  --font-display: 'Poppins', sans-serif;
+  --font-body: 'Poppins', sans-serif;
+  --font-accent: 'Poppins', sans-serif;
 
   --shadow-sm: 0 1px 3px 0 rgba(0,0,0,0.08), 0 1px 2px -1px rgba(0,0,0,0.06);
   --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.08), 0 2px 4px -2px rgba(0,0,0,0.06);
@@ -79,7 +79,7 @@ input, textarea, select {
 /* ===== Typography ===== */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-display);
-  line-height: 1.25;
+  line-height: 1.2;
   color: var(--clr-text);
 }
 
