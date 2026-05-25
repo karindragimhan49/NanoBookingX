@@ -97,7 +97,7 @@ export default function HomePage() {
       <section className={styles.hero}>
         <div className={styles.heroBg}>
           <img
-            src="https://images.unsplash.com/photo-1506197603052-3cc9c3a201bd?auto=format&fit=crop&w=1920&q=80"
+            src="https://images.pexels.com/photos/7980413/pexels-photo-7980413.jpeg"
             alt="Sri Lanka tropical paradise"
           />
           <div className={styles.heroOverlay} />
