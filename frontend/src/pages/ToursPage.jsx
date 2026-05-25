@@ -128,7 +128,7 @@ export default function ToursPage() {
       <div className={styles.pageHeader}>
         <div className={styles.pageBg}>
           <img
-            src="https://images.unsplash.com/photo-1553603227-2358aabe8842?auto=format&fit=crop&w=1920&q=80"
+            src="https://images.pexels.com/photos/18826653/pexels-photo-18826653.jpeg"
             alt="Sri Lanka landscape"
           />
           <div className={styles.pageBgOverlay} />

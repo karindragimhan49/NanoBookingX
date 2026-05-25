@@ -5,10 +5,10 @@ import { packagesApi } from '../api/packagesApi';
 import styles from './HomePage.module.css';
 
 const DESTINATIONS = [
-  { name: 'Sigiriya', region: 'North Central', image: 'https://images.unsplash.com/photo-1580181591617-79e8b65c94e1?auto=format&fit=crop&w=600&q=80', count: 12 },
-  { name: 'Kandy', region: 'Central Province', image: 'https://images.unsplash.com/photo-1571406384609-2b9f83ccf4b6?auto=format&fit=crop&w=600&q=80', count: 9 },
+  { name: 'Sigiriya', region: 'North Central', image: 'https://images.pexels.com/photos/35606856/pexels-photo-35606856.jpeg', count: 12 },
+  { name: 'Kandy', region: 'Central Province', image: 'https://images.pexels.com/photos/14041994/pexels-photo-14041994.jpeg', count: 9 },
   { name: 'Yala', region: 'Southern Province', image: 'https://images.unsplash.com/photo-1564760055775-d63b17a55c44?auto=format&fit=crop&w=600&q=80', count: 7 },
-  { name: 'Galle', region: 'Southern Coast', image: 'https://images.unsplash.com/photo-1576011853-e7d44d64fa14?auto=format&fit=crop&w=600&q=80', count: 11 },
+  { name: 'Galle', region: 'Southern Coast', image: 'https://images.pexels.com/photos/6624969/pexels-photo-6624969.jpeg', count: 11 },
   { name: 'Mirissa', region: 'Southern Coast', image: 'https://images.unsplash.com/photo-1559128010-7c1ad6e1b6a5?auto=format&fit=crop&w=600&q=80', count: 6 },
   { name: 'Ella', region: 'Uva Province', image: 'https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=600&q=80', count: 8 },
 ];
@@ -254,7 +254,7 @@ export default function HomePage() {
           </div>
           <div className={styles.whyImage}>
             <img
-              src="https://images.unsplash.com/photo-1553603227-2358aabe8842?auto=format&fit=crop&w=1200&q=80"
+              src="https://images.pexels.com/photos/11946311/pexels-photo-11946311.jpeg"
               alt="Sri Lanka tea plantation"
               loading="lazy"
             />

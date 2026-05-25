@@ -22,7 +22,7 @@ export default function AboutPage() {
       {/* Hero */}
       <section className={styles.hero}>
         <div className={styles.heroBg}>
-          <img src="https://images.unsplash.com/photo-1571406384609-2b9f83ccf4b6?auto=format&fit=crop&w=1920&q=80" alt="Kandy" />
+          <img src="https://images.pexels.com/photos/20837423/pexels-photo-20837423.jpeg" alt="Kandy" />
           <div className={styles.heroOverlay} />
         </div>
         <div className={`container ${styles.heroContent}`}>
@@ -70,7 +70,7 @@ export default function AboutPage() {
             </div>
             <div className={styles.storyImages}>
               <div className={styles.imgMain}>
-                <img src="https://images.unsplash.com/photo-1580181591617-79e8b65c94e1?auto=format&fit=crop&w=700&q=80" alt="Sigiriya" />
+                <img src="https://images.pexels.com/photos/18619138/pexels-photo-18619138.jpeg" alt="Sigiriya" />
               </div>
               <div className={styles.imgSecondary}>
                 <img src="https://images.unsplash.com/photo-1564760055775-d63b17a55c44?auto=format&fit=crop&w=500&q=80" alt="Elephant" />

@@ -73,7 +73,7 @@ export default function LoginPage() {
           </div>
           <div className={styles.panelBg}>
             <img
-              src="https://images.unsplash.com/photo-1580181591617-79e8b65c94e1?auto=format&fit=crop&w=900&q=80"
+              src="https://images.pexels.com/photos/29813518/pexels-photo-29813518.jpeg"
               alt="Sigiriya Rock"
             />
           </div>
