@@ -1,0 +1,4 @@
+/* Global app-level overrides — page-specific styles use CSS Modules */
+#root {
+  width: 100%;
+}

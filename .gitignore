@@ -39,3 +39,8 @@ desktop.ini
 # ---- Coverage Reports ----
 coverage/
 .nyc_output/
+
+# ---- Temp scripts ----
+backend/seed.js
+backend/*.log
+frontend/*.log
