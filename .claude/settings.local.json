@@ -1,20 +1,7 @@
 {
   "permissions": {
     "allow": [
-      "Bash(mkdir -p \"D:\\\\DEVOPS\\\\NanoBookingX\\\\backend\\\\src\\\\config\" \"D:\\\\DEVOPS\\\\NanoBookingX\\\\backend\\\\src\\\\controllers\" \"D:\\\\DEVOPS\\\\NanoBookingX\\\\backend\\\\src\\\\middleware\" \"D:\\\\DEVOPS\\\\NanoBookingX\\\\backend\\\\src\\\\routes\" \"D:\\\\DEVOPS\\\\NanoBookingX\\\\backend\\\\src\\\\utils\")",
-      "Bash(mkdir -p \"D:\\\\DEVOPS\\\\NanoBookingX\\\\frontend\\\\src\\\\api\" \"D:\\\\DEVOPS\\\\NanoBookingX\\\\frontend\\\\src\\\\components\\\\common\" \"D:\\\\DEVOPS\\\\NanoBookingX\\\\frontend\\\\src\\\\components\\\\layout\" \"D:\\\\DEVOPS\\\\NanoBookingX\\\\frontend\\\\src\\\\context\" \"D:\\\\DEVOPS\\\\NanoBookingX\\\\frontend\\\\src\\\\hooks\" \"D:\\\\DEVOPS\\\\NanoBookingX\\\\frontend\\\\src\\\\pages\" \"D:\\\\DEVOPS\\\\NanoBookingX\\\\frontend\\\\public\")",
-      "Bash(npm install *)",
-      "Bash(node server.js)",
-      "Bash(curl -s http://localhost:5000/api/health)",
-      "Bash(node -e ' *)",
-      "Bash(node -e \"require\\('dotenv'\\).config\\(\\); const { query } = require\\('./src/config/db'\\); async function check\\(\\) { try { const pkg = await query\\('SELECT COUNT\\(*\\) FROM packages'\\); const usr = await query\\('SELECT COUNT\\(*\\) FROM users'\\); console.log\\('Packages:', pkg.rows[0].count, 'Users:', usr.rows[0].count\\); process.exit\\(0\\); } catch\\(e\\) { console.error\\(e.message\\); process.exit\\(1\\); } } check\\(\\);\")",
-      "Bash(node seed.js)",
-      "Bash(curl -s http://localhost:5000/api/packages)",
-      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('Total packages:', d['totalCount']\\); [print\\(' -', p['name'], '| $'+str\\(p['effectivePrice']\\)\\) for p in d['packages'][:3]]\")",
-      "Bash(curl -s -X POST http://localhost:5000/api/auth/login -H \"Content-Type: application/json\" -d \"{\\\\\"email\\\\\":\\\\\"admin@globetrek.lk\\\\\",\\\\\"password\\\\\":\\\\\"admin@123\\\\\"}\")",
-      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('Login success:', d['success'], '| Role:', d['user']['role'], '| Token:', d['token'][:30]+'...'\\)\")",
-      "Bash(npm run *)",
-      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5173/)"
+      "Bash(unzip -p \"icbthdcse5009writ1-1011 \\(1\\).docx\" word/document.xml)"
     ]
   }
 }
